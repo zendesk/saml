@@ -49,24 +49,6 @@ func (c JWTSessionCodec) New(assertion *saml.Assertion) (Session, error) {
 
 	claims.Attributes = map[string][]string{}
 
-	/**
-	This block is commented out because it is responsible for adding all the attributes to JWT
-	Token. With our current Okta setup, users in Engineering Productivity have too many Spinnaker
-	roles and it is causing the JWT to exceed 4096 Bytes which means that the browser can't set
-	the cookie and goes into an infinite redirect loop with okta.
-	*/
-	//for _, attributeStatement := range assertion.AttributeStatements {
-	//	for _, attr := range attributeStatement.Attributes {
-	//		claimName := attr.FriendlyName
-	//		if claimName == "" {
-	//			claimName = attr.Name
-	//		}
-	//		for _, value := range attr.Values {
-	//			claims.Attributes[claimName] = append(claims.Attributes[claimName], value.Value)
-	//		}
-	//	}
-	//}
-
 	// add SessionIndex to claims Attributes
 	for _, authnStatement := range assertion.AuthnStatements {
 		claims.Attributes[claimNameSessionIndex] = append(claims.Attributes[claimNameSessionIndex],
