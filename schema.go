@@ -11,6 +11,24 @@ import (
 	"github.com/russellhaering/goxmldsig/etreeutils"
 )
 
+// RequestedAuthnContext represents the SAML object of the same name, an indication of the
+// requirements on the authentication process.
+type RequestedAuthnContext struct {
+	XMLName              xml.Name `xml:"urn:oasis:names:tc:SAML:2.0:protocol RequestedAuthnContext"`
+	Comparison           string   `xml:",attr"`
+	AuthnContextClassRef string   `xml:"urn:oasis:names:tc:SAML:2.0:assertion AuthnContextClassRef"`
+}
+
+// Element returns an etree.Element representing the object in XML form.
+func (r *RequestedAuthnContext) Element() *etree.Element {
+	el := etree.NewElement("samlp:RequestedAuthnContext")
+	el.CreateAttr("Comparison", r.Comparison)
+	elContext := etree.NewElement("saml:AuthnContextClassRef")
+	elContext.SetText(r.AuthnContextClassRef)
+	el.AddChild(elContext)
+	return el
+}
+
 // AuthnRequest represents the SAML object of the same name, a request from a service provider
 // to authenticate a user.
 //
@@ -26,11 +44,11 @@ type AuthnRequest struct {
 	Issuer       *Issuer   `xml:"urn:oasis:names:tc:SAML:2.0:assertion Issuer"`
 	Signature    *etree.Element
 
-	Subject      *Subject
-	NameIDPolicy *NameIDPolicy `xml:"urn:oasis:names:tc:SAML:2.0:protocol NameIDPolicy"`
-	Conditions   *Conditions
-	//RequestedAuthnContext *RequestedAuthnContext // TODO
-	//Scoping               *Scoping // TODO
+	Subject               *Subject
+	NameIDPolicy          *NameIDPolicy `xml:"urn:oasis:names:tc:SAML:2.0:protocol NameIDPolicy"`
+	Conditions            *Conditions
+	RequestedAuthnContext *RequestedAuthnContext
+	// Scoping               *Scoping // TODO
 
 	ForceAuthn                     *bool  `xml:",attr"`
 	IsPassive                      *bool  `xml:",attr"`
@@ -77,11 +95,11 @@ func (r *LogoutRequest) Element() *etree.Element {
 	if r.Issuer != nil {
 		el.AddChild(r.Issuer.Element())
 	}
-	if r.NameID != nil {
-		el.AddChild(r.NameID.Element())
-	}
 	if r.Signature != nil {
 		el.AddChild(r.Signature)
+	}
+	if r.NameID != nil {
+		el.AddChild(r.NameID.Element())
 	}
 	if r.SessionIndex != nil {
 		el.AddChild(r.SessionIndex.Element())
@@ -90,7 +108,7 @@ func (r *LogoutRequest) Element() *etree.Element {
 }
 
 // MarshalXML implements xml.Marshaler
-func (r *LogoutRequest) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (r *LogoutRequest) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 	type Alias LogoutRequest
 	aux := &struct {
 		IssueInstant RelaxedTime  `xml:",attr"`
@@ -159,7 +177,6 @@ func (r *LogoutRequest) Deflate() ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-// Element returns an etree.Element representing the object
 // Element returns an etree.Element representing the object in XML form.
 func (r *AuthnRequest) Element() *etree.Element {
 	el := etree.NewElement("samlp:AuthnRequest")
@@ -189,12 +206,12 @@ func (r *AuthnRequest) Element() *etree.Element {
 	if r.Conditions != nil {
 		el.AddChild(r.Conditions.Element())
 	}
-	//if r.RequestedAuthnContext != nil {
-	//	el.AddChild(r.RequestedAuthnContext.Element())
-	//}
-	//if r.Scoping != nil {
-	//	el.AddChild(r.Scoping.Element())
-	//}
+	if r.RequestedAuthnContext != nil {
+		el.AddChild(r.RequestedAuthnContext.Element())
+	}
+	// if r.Scoping != nil {
+	// 	el.AddChild(r.Scoping.Element())
+	// }
 	if r.ForceAuthn != nil {
 		el.CreateAttr("ForceAuthn", strconv.FormatBool(*r.ForceAuthn))
 	}
@@ -220,7 +237,7 @@ func (r *AuthnRequest) Element() *etree.Element {
 }
 
 // MarshalXML implements xml.Marshaler
-func (r *AuthnRequest) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (r *AuthnRequest) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 	type Alias AuthnRequest
 	aux := &struct {
 		IssueInstant RelaxedTime `xml:",attr"`
@@ -306,7 +323,7 @@ func (a *NameIDPolicy) Element() *etree.Element {
 
 // ArtifactResolve represents the SAML object of the same name.
 type ArtifactResolve struct {
-	XMLName      xml.Name  `xml:"urn:oasis:names:tc:SAML:2.0:protocol ArtifactResponse"`
+	XMLName      xml.Name  `xml:"urn:oasis:names:tc:SAML:2.0:protocol ArtifactResolve"`
 	ID           string    `xml:",attr"`
 	Version      string    `xml:",attr"`
 	IssueInstant time.Time `xml:",attr"`
@@ -357,7 +374,7 @@ func (r *ArtifactResolve) SoapRequest() *etree.Element {
 }
 
 // MarshalXML implements xml.Marshaler
-func (r *ArtifactResolve) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (r *ArtifactResolve) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 	type Alias ArtifactResolve
 	aux := &struct {
 		IssueInstant RelaxedTime `xml:",attr"`
@@ -431,7 +448,7 @@ func (r *ArtifactResponse) Element() *etree.Element {
 }
 
 // MarshalXML implements xml.Marshaler
-func (r *ArtifactResponse) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (r *ArtifactResponse) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 	type Alias ArtifactResponse
 	aux := &struct {
 		IssueInstant RelaxedTime `xml:",attr"`
@@ -525,7 +542,7 @@ func (r *Response) Element() *etree.Element {
 }
 
 // MarshalXML implements xml.Marshaler
-func (r *Response) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (r *Response) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 	type Alias Response
 	aux := &struct {
 		IssueInstant RelaxedTime `xml:",attr"`
@@ -650,7 +667,7 @@ const (
 	StatusRequestUnsupported = "urn:oasis:names:tc:SAML:2.0:status:RequestUnsupported"
 
 	// StatusRequestVersionDeprecated means the SAML responder cannot process any requests with the protocol version specified in the request.
-	StatusRequestVersionDeprecated = "urn:oasis:names:tc:SAML:2.0:status:RequestVersionDeprecated"
+	StatusRequestVersionDeprecated = "urn:oasis:names:tc:SAML:2.0:status:RequestVersionDeprecated" //nolint:gosec
 
 	// StatusRequestVersionTooHigh means the SAML responder cannot process the request because the protocol version specified in the request message is a major upgrade from the highest protocol version supported by the responder.
 	StatusRequestVersionTooHigh = "urn:oasis:names:tc:SAML:2.0:status:RequestVersionTooHigh"
@@ -747,7 +764,7 @@ func (a *Assertion) Element() *etree.Element {
 	for _, attributeStatement := range a.AttributeStatements {
 		el.AddChild(attributeStatement.Element())
 	}
-	err := etreeutils.TransformExcC14n(el, canonicalizerPrefixList)
+	err := etreeutils.TransformExcC14n(el, canonicalizerPrefixList, false)
 	if err != nil {
 		panic(err)
 	}
@@ -1136,9 +1153,9 @@ func (a *SubjectLocality) Element() *etree.Element {
 // See http://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf §2.7.2.2
 type AuthnContext struct {
 	AuthnContextClassRef *AuthnContextClassRef
-	//AuthnContextDecl          *AuthnContextDecl        ... TODO
-	//AuthnContextDeclRef       *AuthnContextDeclRef     ... TODO
-	//AuthenticatingAuthorities []AuthenticatingAuthority... TODO
+	// AuthnContextDecl          *AuthnContextDecl        ... TODO
+	// AuthnContextDeclRef       *AuthnContextDeclRef     ... TODO
+	// AuthenticatingAuthorities []AuthenticatingAuthority... TODO
 }
 
 // Element returns an etree.Element representing the object in XML form.
@@ -1275,7 +1292,7 @@ func (r *LogoutResponse) Element() *etree.Element {
 }
 
 // MarshalXML implements xml.Marshaler
-func (r *LogoutResponse) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (r *LogoutResponse) MarshalXML(e *xml.Encoder, _ xml.StartElement) error {
 	type Alias LogoutResponse
 	aux := &struct {
 		IssueInstant RelaxedTime `xml:",attr"`
