@@ -11,7 +11,7 @@ require (
 	github.com/kr/pretty v0.3.0
 	github.com/zenazn/goji v1.0.1
 	github.com/zendesk/saml v0.0.0-00010101000000-000000000000
-	golang.org/x/crypto v0.0.0-20220128200615-198e4374d7ed
+	golang.org/x/crypto v0.17.0
 )
 
 require github.com/zendesk/saml/samlidp v0.0.0-00010101000000-000000000000
